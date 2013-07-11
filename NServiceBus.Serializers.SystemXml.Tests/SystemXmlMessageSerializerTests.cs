@@ -64,6 +64,18 @@
         }
 
         [Fact]
+        public void ItShouldBeAbleToDeserializeArbitraryTypesWithMissingTypeNamesForNestedObjects()
+        {
+            var objs = DeserializeXML(@"<?xml version=""1.0"" ?><Bar><Foo Name=""Bob""><Age>15</Age></Foo></Bar>", new[] { typeof(Bar) });
+            Assert.Equal(1, objs.Length);
+            var obj = objs.First();
+            Assert.IsType<Bar>(obj);
+            var foo = obj as Bar;
+            Assert.Equal(15, foo.Foo.Years);
+            Assert.Equal("Bob", foo.Foo.PersonName);
+        }
+
+        [Fact]
         public void ItShouldFailIfNoTypesAreSpecified()
         {
             Assert.Throws<ArgumentException>(() => DeserializeXML(@"<?xml version=""1.0"" ?><Person Name=""Bob""><Age>15</Age></Person>", null));
@@ -83,6 +95,12 @@
             }
         }
 
+        [XmlRoot(ElementName = "Bar", DataType = "bar")]
+        public class Bar
+        {
+            [XmlElement(ElementName = "Foo")]
+            public Foo Foo { get; set; }
+        }
         [XmlRoot(ElementName = "Person", DataType = "bob")]
         public class Foo
         {
