@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Xml.Serialization;
     using Serialization;
 
@@ -21,9 +22,16 @@
             }
         }
 
-        public object[] Deserialize(Stream stream, IList<Type> messageTypes = null)
+        public object[] Deserialize(Stream stream, IList<Type> messageTypes)
         {
-            throw new NotImplementedException();
+            if (messageTypes == null || messageTypes.Count < 1)
+            {
+                throw new ArgumentException("Need one or more types to be specified", "messageTypes");
+            }
+            var mainType = messageTypes.First();
+            var otherTypes = messageTypes.Skip(1);
+            var serializer = new XmlSerializer(mainType, otherTypes.ToArray());
+            return new[] {serializer.Deserialize(stream)};
         }
 
         public string ContentType { get { return ContentTypes.Xml; } }
