@@ -17,21 +17,42 @@
         }
 
         [Fact]
-        public void ItShouldSerializeSingleObject()
+        public void ItShouldThrowAnExceptionIfNoMessagesSpecified()
         {
-            Assert.Contains(@"<dateTime>0001-01-01T00:00:00</dateTime>", SerializeMessages(new object[] { DateTime.MinValue }));
+            Assert.Throws<ArgumentException>(() => SerializeMessagesWithoutWrapper(new object[] {}));
+        }
+
+
+        [Fact]
+        public void ItShouldSerializeSingleObjectWithoutWrapper()
+        {
+            var unwrappedMessage = SerializeMessagesWithoutWrapper(new object[] {DateTime.MinValue});
+            Assert.Contains(@"<dateTime>0001-01-01T00:00:00</dateTime>", unwrappedMessage);
+            Assert.DoesNotContain(SystemXmlMessageSerializer.EnvelopeName, unwrappedMessage);
         }
 
         [Fact]
-        public void ItShouldRaiseExceptionOnSerializeMultipleObjects()
+        public void ItShouldSerializeSingleObjectWithWrapper()
         {
-            Assert.Throws<ArgumentException>(() => SerializeMessages(new object[] { DateTime.MinValue, DateTime.MaxValue }));
+            var unwrappedMessage = SerializeMessagesWithWrapper(new object[] { DateTime.MinValue });
+            Assert.Contains(@"<dateTime>0001-01-01T00:00:00</dateTime>", unwrappedMessage);
+            Assert.True(unwrappedMessage.StartsWith("<?xml"));
+            Assert.Contains(SystemXmlMessageSerializer.EnvelopeName, unwrappedMessage);
+        }
+
+        [Fact]
+        public void ItShouldSerializeMultipleObjectsIntoContainer()
+        {
+            var serializedMessage = SerializeMessagesWithoutWrapper(new object[] {DateTime.MinValue, DateTime.MaxValue});
+            var x = XDocument.Parse(serializedMessage);
+            Assert.Equal(SystemXmlMessageSerializer.EnvelopeName, x.Root.Name);
+            Assert.Equal(2, x.Root.Elements().Count());
         }
 
         [Fact]
         public void ItShouldHonorSystemXmlAnnotationsOnSerialize()
         {
-            var ser = SerializeMessages(new object[] {new Foo{PersonName = "Phil", Years = 15}});
+            var ser = SerializeMessagesWithoutWrapper(new object[] {new Foo{PersonName = "Phil", Years = 15}});
             var x = XDocument.Parse(ser);
             Assert.Equal("Person", x.Root.Name);
             Assert.Equal(1, x.Root.Elements().Count());
@@ -76,6 +97,18 @@
         }
 
         [Fact]
+        public void ItShouldBeAbleToDeserializeSingleObjectInWrapper()
+        {
+            var objs = DeserializeXML(@"<?xml version=""1.0"" ?><Messages><MyClass xmlns='MyNamespace'><Message>Hello</Message></MyClass></Messages>", new[] { typeof(MyClass) });
+            Assert.Equal(1, objs.Length);
+            var obj = objs.First();
+            Assert.IsType<MyClass>(obj);
+            var foo = obj as MyClass;
+            Assert.Equal("Hello", foo.Message);
+        }
+
+
+        [Fact]
         public void ItShouldFailIfNoTypesAreSpecified()
         {
             Assert.Throws<ArgumentException>(() => DeserializeXML(@"<?xml version=""1.0"" ?><Person Name=""Bob""><Age>15</Age></Person>", null));
@@ -109,10 +142,24 @@
             [XmlElement(ElementName = "Age")]
             public int Years { get; set; }
         }
-        private static string SerializeMessages(object[] messages)
+
+        [XmlRoot(Namespace = "MyNamespace")]
+        public class MyClass
+        {
+            public string Message { get; set; }
+        }
+        private static string SerializeMessagesWithoutWrapper(object[] messages)
+        {
+            return SerializeMessages(messages, true);
+        }
+        private static string SerializeMessagesWithWrapper(object[] messages)
+        {
+            return SerializeMessages(messages, false);
+        }
+        private static string SerializeMessages(object[] messages, bool skipWrappingElementForSingleMessages)
         {
             string s;
-            var ser = new SystemXmlMessageSerializer();
+            var ser = new SystemXmlMessageSerializer { SkipWrappingElementForSingleMessages = skipWrappingElementForSingleMessages };
             using (var stream = new MemoryStream())
             {
                 ser.Serialize(messages, stream);
