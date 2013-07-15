@@ -109,9 +109,19 @@
 
 
         [Fact]
-        public void ItShouldFailIfNoTypesAreSpecified()
+        public void ItShouldFailIfNoTypesAreSpecifiedAndTypeNotOnRootElement()
         {
             Assert.Throws<ArgumentException>(() => DeserializeXML(@"<?xml version=""1.0"" ?><Person Name=""Bob""><Age>15</Age></Person>", null));
+        }
+
+        [Fact]
+        public void ItShouldBeAbleToDeserializeIfTypeCanBeGleanedFromRootElement()
+        {
+            var msg = DeserializeXML(@"<?xml version=""1.0"" ?><ns1:MyType xmlns:ns1=""http://www.mytest.com/NServiceBus.Serializers.SystemXml.Tests"" Message=""Hello world"" />", null);
+            Assert.NotNull(msg);
+            Assert.IsType<MyType>(msg[0]);
+            var myType = (MyType) msg[0];
+            Assert.Equal("Hello world", myType.Message);
         }
 
 
@@ -172,5 +182,11 @@
             }
             return s;
         }
+    }
+    [XmlRoot(Namespace = "http://www.mytest.com/NServiceBus.Serializers.SystemXml.Tests")]
+    public class MyType
+    {
+        [XmlAttribute]
+        public string Message { get; set; }
     }
 }

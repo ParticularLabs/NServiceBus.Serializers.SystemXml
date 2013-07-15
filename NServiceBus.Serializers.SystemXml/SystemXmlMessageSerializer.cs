@@ -51,14 +51,25 @@
 
         public object[] Deserialize(Stream stream, IList<Type> messageTypes)
         {
-            if (messageTypes == null || messageTypes.Count < 1)
-            {
-                throw new ArgumentException("Need one or more types to be specified", "messageTypes");
-            }
-            var mainType = messageTypes.First();
-            var otherTypes = messageTypes.Skip(1).ToArray();
             var xdoc = new XmlDocument();
             xdoc.Load(stream);
+            Type mainType;
+            var otherTypes = new Type[0];
+            if (messageTypes == null || messageTypes.Count < 1)
+            {
+                mainType = GetTypeFromElementName(xdoc.DocumentElement);
+                if(mainType == null)
+                {
+                    throw new ArgumentException("Need one or more types to be specified", "messageTypes");
+                }
+            }
+            else
+            {
+                mainType = messageTypes.First();
+                otherTypes = messageTypes.Skip(1).ToArray();
+            }
+            
+            
             var results = new List<object>();
             var documentElement = xdoc.DocumentElement;
             if (documentElement.Name == EnvelopeName && documentElement.NamespaceURI == _envelopeNamespace)
@@ -76,7 +87,18 @@
             return results.ToArray();
         }
 
-        private static void AddDocumentFromElement(XmlElement element, Type mainType, IEnumerable<Type> otherTypes, List<object> results)
+        private static Type GetTypeFromElementName(XmlNode element)
+        {
+            var xmlNs = element.NamespaceURI;
+            var defaultNameSpace = xmlNs.Substring(xmlNs.LastIndexOf("/") + 1);
+            var className = element.LocalName;
+            var fullTypeName = defaultNameSpace + "." + className;
+            return Type.GetType(fullTypeName) ?? AppDomain.CurrentDomain.GetAssemblies()
+                .Select(a => a.GetType(fullTypeName))
+                .FirstOrDefault(t => t != null);
+        }
+
+        private static void AddDocumentFromElement(XmlElement element, Type mainType, IEnumerable<Type> otherTypes, ICollection<object> results)
         {
             using (var tmpStream = new MemoryStream())
             {
