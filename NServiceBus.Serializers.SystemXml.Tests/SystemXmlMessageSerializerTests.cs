@@ -124,6 +124,16 @@
             Assert.Equal("Hello world", myType.Message);
         }
 
+        [Fact]
+        public void ItShouldBeAbleToDeserializeIfTypeCanBeGleanedFromElementInsideEnvelope()
+        {
+            var msg = DeserializeXML(@"<?xml version=""1.0"" ?><Messages><ns1:MyType xmlns:ns1=""http://www.mytest.com/NServiceBus.Serializers.SystemXml.Tests"" Message=""Hello world"" /></Messages>", null);
+            Assert.NotNull(msg);
+            Assert.IsType<MyType>(msg[0]);
+            var myType = (MyType)msg[0];
+            Assert.Equal("Hello world", myType.Message);
+        }
+
 
         private object[] DeserializeXML(string message, Type[] types)
         {

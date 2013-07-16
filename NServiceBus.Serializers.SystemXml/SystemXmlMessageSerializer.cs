@@ -1,6 +1,7 @@
 ﻿namespace NServiceBus.Serializers.SystemXml
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -8,6 +9,7 @@
     using System.Xml;
     using System.Xml.Serialization;
     using Serialization;
+    using Logging;
 
     public class SystemXmlMessageSerializer : IMessageSerializer
     {
@@ -15,6 +17,7 @@
         private readonly string _envelopeNamespace = String.Empty;
         private static readonly Encoding Encoding = Encoding.UTF8;
         public const string EnvelopeName = "Messages";
+        private const int TypesToCacheBeforeWarning = 500;
 
         public void Serialize(object[] messages, Stream stream)
         {
@@ -43,49 +46,25 @@
             }
         }
 
-        private static void WriteMessage(object message, XmlWriter writer)
-        {
-            var serializer = new XmlSerializer(message.GetType());
-            serializer.Serialize(writer, message);
-        }
-
         public object[] Deserialize(Stream stream, IList<Type> messageTypes)
         {
             var xdoc = new XmlDocument();
             xdoc.Load(stream);
-            Type mainType;
-            var otherTypes = new Type[0];
-            if (messageTypes == null || messageTypes.Count < 1)
-            {
-                mainType = GetTypeFromElementName(xdoc.DocumentElement);
-                if(mainType == null)
-                {
-                    throw new ArgumentException("Need one or more types to be specified", "messageTypes");
-                }
-            }
-            else
-            {
-                mainType = messageTypes.First();
-                otherTypes = messageTypes.Skip(1).ToArray();
-            }
-            
             
             var results = new List<object>();
             var documentElement = xdoc.DocumentElement;
-            if (documentElement.Name == EnvelopeName && documentElement.NamespaceURI == _envelopeNamespace)
+            if (documentElement.LocalName == EnvelopeName && documentElement.NamespaceURI == _envelopeNamespace)
             {
-                foreach (var element in documentElement.ChildNodes)
-                {
-                    AddDocumentFromElement((XmlElement)element, mainType, otherTypes, results);
-                }
+                results.AddRange(documentElement.ChildNodes.Cast<object>().Select(element => GetObjectFromNode((XmlElement)element, messageTypes)));
             }
             else
             {
-                var element = documentElement;
-                AddDocumentFromElement(element, mainType, otherTypes, results);
+                results.Add(GetObjectFromNode(documentElement, messageTypes));
             }
             return results.ToArray();
         }
+
+        public string ContentType { get { return ContentTypes.Xml; } }
 
         private static Type GetTypeFromElementName(XmlNode element)
         {
@@ -93,13 +72,26 @@
             var defaultNameSpace = xmlNs.Substring(xmlNs.LastIndexOf("/") + 1);
             var className = element.LocalName;
             var fullTypeName = defaultNameSpace + "." + className;
-            return Type.GetType(fullTypeName) ?? AppDomain.CurrentDomain.GetAssemblies()
-                .Select(a => a.GetType(fullTypeName))
-                .FirstOrDefault(t => t != null);
+            var returnValue = typesCache.GetOrAdd(fullTypeName, key => Type.GetType(key) ?? AppDomain.CurrentDomain.GetAssemblies()
+                                                                                     .Select(a => a.GetType(key))
+                                                                                     .FirstOrDefault(t => t != null));
+            if (typesCache.Count > TypesToCacheBeforeWarning)
+            {
+                logger.WarnFormat("Number of cached types exceeded {0}. There's likely something wrong", TypesToCacheBeforeWarning);
+            }
+            return returnValue;
         }
 
-        private static void AddDocumentFromElement(XmlElement element, Type mainType, IEnumerable<Type> otherTypes, ICollection<object> results)
+        private static void WriteMessage(object message, XmlWriter writer)
         {
+            var serializer = new XmlSerializer(message.GetType());
+            serializer.Serialize(writer, message);
+        }
+
+        private static object GetObjectFromNode(XmlNode element, IEnumerable<Type> messageTypes)
+        {
+            var types = GetTypesForElement(element, messageTypes);
+
             using (var tmpStream = new MemoryStream())
             {
                 using (var writer = XmlWriter.Create(tmpStream, new XmlWriterSettings{Encoding = Encoding}))
@@ -107,11 +99,27 @@
                     element.WriteTo(writer);
                 }
                 tmpStream.Seek(0, SeekOrigin.Begin);
-                var serializer = new XmlSerializer(mainType, otherTypes.ToArray());
-                results.Add(serializer.Deserialize(tmpStream));
+                var serializer = new XmlSerializer(types.First(), types.Skip(1).ToArray());
+                return serializer.Deserialize(tmpStream);
             }
         }
 
-        public string ContentType { get { return ContentTypes.Xml; } }
+        private static IEnumerable<Type> GetTypesForElement(XmlNode element, IEnumerable<Type> messageTypes)
+        {
+            var types = messageTypes;
+            if (messageTypes == null || !messageTypes.Any())
+            {
+                var mainType = GetTypeFromElementName(element);
+                if (mainType == null)
+                {
+                    throw new ArgumentException("Need one or more types to be specified", "messageTypes");
+                }
+                types = new[]{mainType};
+            }
+            return types;
+        }
+
+        private static readonly ILog logger = LogManager.GetLogger(typeof(SystemXmlMessageSerializer));
+        private static readonly ConcurrentDictionary<string,Type> typesCache = new ConcurrentDictionary<string, Type>();
     }
 }
