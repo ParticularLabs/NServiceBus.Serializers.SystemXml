@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>NServiceBus.Serializers.SystemXml</id>
+    <version>1.0.0</version>
+    <authors>Fawad Halim</authors>
+    <owners>Fawad Halim</owners>
+    <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
+    <projectUrl>http://hg.fawad.net/nservicebus.serializers.systemxml</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Implemements a System.Xml.Serialization based NServiceBus message serializer to allow better interoperability with non-NServiceBus peers.</description>
+    <releaseNotes>Initial Release</releaseNotes>
+    <copyright>Copyright 2013 Fawad Halim</copyright>
+    <tags>NServiceBus XML Interoperability</tags>
+  </metadata>
+</package>
