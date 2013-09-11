@@ -99,7 +99,7 @@
                     element.WriteTo(writer);
                 }
                 tmpStream.Seek(0, SeekOrigin.Begin);
-                var serializer = new XmlSerializer(types.First(), types.Skip(1).ToArray());
+                var serializer = new XmlSerializer(types.First());
                 return serializer.Deserialize(tmpStream);
             }
         }

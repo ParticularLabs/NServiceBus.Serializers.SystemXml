@@ -50,6 +50,7 @@
     <Compile Include="SystemXmlSerializerSettings.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="NServiceBus.Serializers.SystemXml.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
