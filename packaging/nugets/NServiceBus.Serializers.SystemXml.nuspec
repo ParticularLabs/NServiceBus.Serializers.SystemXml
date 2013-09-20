@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>NServiceBus.Serializers.SystemXml</id>
-    <version>1.0.1</version>
+    <version>0.0.0</version>
     <authors>Fawad Halim</authors>
     <owners>Fawad Halim</owners>
     <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
