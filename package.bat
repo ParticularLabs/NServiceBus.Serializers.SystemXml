@@ -1,7 +1,5 @@
 SETLOCAL
-SET PROJECT=%~p0
-GOTO END
-echo %PROJECT%
+SET PROJECT=NServiceBus.Serializers.SystemXml
 SET VERSION=1.0.0
 SET R=buildsupport\ripple
 %R% clean
