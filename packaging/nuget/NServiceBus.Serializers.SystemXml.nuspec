@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package >
-  <metadata>
+  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <id>NServiceBus.Serializers.SystemXml</id>
     <version>0.0.0</version>
     <authors>Fawad Halim</authors>
