@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <UsingTask AssemblyFile="$(SolutionDir)\..\buildsupport\xunit.runner.msbuild.dll" TaskName="Xunit.Runner.MSBuild.xunit"/>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -69,6 +70,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)..\BuildSupport\RippleRestoreTask.targets" Condition="Exists('$(SolutionDir)..\BuildSupport\RippleRestoreTask.targets')" />
+  <Target Name="Test">
+    <xunit Assembly="$(TargetDir)$(TargetName).dll" Xml="$(TargetDir)$(TargetName).dll.xunitresults.xml" />
+    <XslTransformation XmlInputPaths="$(TargetDir)$(TargetName).dll.xunitresults.xml" XslInputPath="$(SolutionDir)\..\buildsupport\NUnitXml.xslt" OutputPaths="$(TargetDir)$(TargetName).dll.nunitresults.xml" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
