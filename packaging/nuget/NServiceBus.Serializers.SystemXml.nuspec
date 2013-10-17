@@ -1,6 +1,6 @@
-<?xml version="1.0"?>
-<package >
-  <metadata xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
     <id>NServiceBus.Serializers.SystemXml</id>
     <version>0.0.0</version>
     <authors>Fawad Halim</authors>
@@ -12,5 +12,12 @@
     <releaseNotes>Initial Release</releaseNotes>
     <copyright>Copyright 2013 Fawad Halim</copyright>
     <tags>NServiceBus XML Interoperability</tags>
+    <dependencies>
+      <dependency id="NServiceBus" version="[4.1.0.0, 5.0.0.0)" />
+      <dependency id="NServiceBus.Interfaces" version="[4.1.0.0, 5.0.0.0)" />
+    </dependencies>
   </metadata>
+  <files>
+    <file src="..\..\src\NServiceBus.Serializers.SystemXml\bin\Debug\NServiceBus.Serializers.SystemXml.???" target="lib\net40" />
+  </files>
 </package>
