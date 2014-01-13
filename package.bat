@@ -1,6 +1,6 @@
 SETLOCAL
 SET PROJECT=NServiceBus.Serializers.SystemXml
-SET VERSION=1.0.0
+SET VERSION=1.0.3
 SET R=buildsupport\ripple
 %R% clean
 msbuild src\%PROJECT%.sln /target:clean
