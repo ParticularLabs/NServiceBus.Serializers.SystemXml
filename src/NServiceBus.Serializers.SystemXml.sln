@@ -1,9 +1,16 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Serializers.SystemXml", "NServiceBus.Serializers.SystemXml\NServiceBus.Serializers.SystemXml.csproj", "{70021835-58FB-4207-AD52-EBFC9B0F8275}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBus.Serializers.SystemXml.Tests", "NServiceBus.Serializers.SystemXml.Tests\NServiceBus.Serializers.SystemXml.Tests.csproj", "{17CF4941-7F8B-4AAF-95B0-577C6699B4F5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{337EAFD3-EBF2-46D4-9BB7-DE50C28D4FEF}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
