@@ -6,6 +6,8 @@
     using System.Text;
     using System.Xml.Linq;
     using System.Xml.Serialization;
+    using Serialization;
+    using Settings;
     using Xunit;
 
     public class SystemXmlMessageSerializerTests
@@ -13,46 +15,30 @@
         [Fact]
         public void ItShouldHaveAProperContentType()
         {
-            Assert.Equal("text/xml", new SystemXmlMessageSerializer().ContentType);
+            Assert.Equal("text/xml", CreateSerializer().ContentType);
         }
 
         [Fact]
         public void ItShouldThrowAnExceptionIfNoMessagesSpecified()
         {
-            Assert.Throws<ArgumentException>(() => SerializeMessagesWithoutWrapper(new object[] {}));
+            Assert.Throws<ArgumentNullException>(() => SerializeMessage(null));
         }
 
 
         [Fact]
         public void ItShouldSerializeSingleObjectWithoutWrapper()
         {
-            var unwrappedMessage = SerializeMessagesWithoutWrapper(new object[] {DateTime.MinValue});
+            var unwrappedMessage = SerializeMessage(DateTime.MinValue);
             Assert.Contains(@"<dateTime>0001-01-01T00:00:00</dateTime>", unwrappedMessage);
-            Assert.DoesNotContain(SystemXmlMessageSerializer.EnvelopeName, unwrappedMessage);
+            Assert.DoesNotContain(EnvelopeName, unwrappedMessage);
         }
 
-        [Fact]
-        public void ItShouldSerializeSingleObjectWithWrapper()
-        {
-            var unwrappedMessage = SerializeMessagesWithWrapper(new object[] { DateTime.MinValue });
-            Assert.Contains(@"<dateTime>0001-01-01T00:00:00</dateTime>", unwrappedMessage);
-            Assert.True(unwrappedMessage.StartsWith("<?xml"));
-            Assert.Contains(SystemXmlMessageSerializer.EnvelopeName, unwrappedMessage);
-        }
 
-        [Fact]
-        public void ItShouldSerializeMultipleObjectsIntoContainer()
-        {
-            var serializedMessage = SerializeMessagesWithoutWrapper(new object[] {DateTime.MinValue, DateTime.MaxValue});
-            var x = XDocument.Parse(serializedMessage);
-            Assert.Equal(SystemXmlMessageSerializer.EnvelopeName, x.Root.Name);
-            Assert.Equal(2, x.Root.Elements().Count());
-        }
 
         [Fact]
         public void ItShouldHonorSystemXmlAnnotationsOnSerialize()
         {
-            var ser = SerializeMessagesWithoutWrapper(new object[] {new Foo{PersonName = "Phil", Years = 15}});
+            var ser = SerializeMessage(new Foo { PersonName = "Phil", Years = 15 });
             var x = XDocument.Parse(ser);
             Assert.Equal("Person", x.Root.Name);
             Assert.Equal(1, x.Root.Elements().Count());
@@ -66,7 +52,7 @@
         [Fact]
         public void ItShouldBeAbleToDeserializeDateProperly()
         {
-            var objs = DeserializeXML(@"<?xml version=""1.0"" ?><dateTime>0001-01-01T00:00:00</dateTime>", new[]{typeof(DateTime)});
+            var objs = DeserializeXML(@"<?xml version=""1.0"" ?><dateTime>0001-01-01T00:00:00</dateTime>", new[] { typeof(DateTime) });
             Assert.Equal(1, objs.Length);
             var obj = objs.First();
             Assert.IsType<DateTime>(obj);
@@ -120,7 +106,7 @@
             var msg = DeserializeXML(@"<?xml version=""1.0"" ?><ns1:MyType xmlns:ns1=""http://www.mytest.com/NServiceBus.Serializers.SystemXml.Tests"" Message=""Hello world"" />", null);
             Assert.NotNull(msg);
             Assert.IsType<MyType>(msg[0]);
-            var myType = (MyType) msg[0];
+            var myType = (MyType)msg[0];
             Assert.Equal("Hello world", myType.Message);
         }
 
@@ -137,7 +123,8 @@
 
         private object[] DeserializeXML(string message, Type[] types)
         {
-            var ser = new SystemXmlMessageSerializer();
+            var ser = CreateSerializer();
+
             using (var stream = new MemoryStream())
             {
                 var bytes = Encoding.UTF8.GetBytes(message.ToCharArray());
@@ -168,21 +155,14 @@
         {
             public string Message { get; set; }
         }
-        private static string SerializeMessagesWithoutWrapper(object[] messages)
-        {
-            return SerializeMessages(messages, true);
-        }
-        private static string SerializeMessagesWithWrapper(object[] messages)
-        {
-            return SerializeMessages(messages, false);
-        }
-        private static string SerializeMessages(object[] messages, bool skipWrappingElementForSingleMessages)
+
+        static string SerializeMessage(object message)
         {
             string s;
-            var ser = new SystemXmlMessageSerializer { SkipWrappingElementForSingleMessages = skipWrappingElementForSingleMessages };
+            var ser = CreateSerializer();
             using (var stream = new MemoryStream())
             {
-                ser.Serialize(messages, stream);
+                ser.Serialize(message, stream);
                 stream.Flush();
                 stream.Seek(0, SeekOrigin.Begin);
                 using (var streamReader = new StreamReader(stream))
@@ -192,6 +172,13 @@
             }
             return s;
         }
+
+        static IMessageSerializer CreateSerializer()
+        {
+            return new SystemXmlSerializer().Configure(new SettingsHolder())(null);
+        }
+
+        public const string EnvelopeName = "Messages";
     }
     [XmlRoot(Namespace = "http://www.mytest.com/NServiceBus.Serializers.SystemXml.Tests")]
     public class MyType
