@@ -11,38 +11,29 @@
     using Serialization;
     using Logging;
 
-    public class SystemXmlMessageSerializer : IMessageSerializer
+    class SystemXmlMessageSerializer : IMessageSerializer
     {
-        public bool SkipWrappingElementForSingleMessages { get; set; }
         private readonly string _envelopeNamespace = String.Empty;
         private static readonly Encoding Encoding = Encoding.UTF8;
         public const string EnvelopeName = "Messages";
         private const int TypesToCacheBeforeWarning = 500;
 
-        public void Serialize(object[] messages, Stream stream)
+        public void Serialize(object message, Stream stream)
         {
-            if (!messages.Any() && SkipWrappingElementForSingleMessages)
+            if (message == null)
             {
-                throw new ArgumentException("Cannot serialize empty object collection without envelope", "messages");
+                throw new ArgumentNullException(nameof(message));
             }
 
-            var writeEnvelope = !SkipWrappingElementForSingleMessages || messages.Length > 1;
-            
+            if (stream == null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+
             using (var writer = XmlWriter.Create(stream, new XmlWriterSettings{Encoding = Encoding}))
             {
-                if (writeEnvelope)
-                {
-                    writer.WriteStartElement(EnvelopeName, _envelopeNamespace);
-                    foreach (var message in messages)
-                    {
-                        WriteMessage(message, writer);
-                    }
-                    writer.WriteEndElement();
-                }
-                else
-                {
-                    WriteMessage(messages.First(), writer);
-                }
+                var serializer = new XmlSerializer(message.GetType());
+                serializer.Serialize(writer, message);
             }
         }
 
@@ -50,7 +41,7 @@
         {
             var xdoc = new XmlDocument();
             xdoc.Load(stream);
-            
+
             var results = new List<object>();
             var documentElement = xdoc.DocumentElement;
             if (documentElement.LocalName == EnvelopeName && documentElement.NamespaceURI == _envelopeNamespace)
@@ -82,11 +73,6 @@
             return returnValue;
         }
 
-        private static void WriteMessage(object message, XmlWriter writer)
-        {
-            var serializer = new XmlSerializer(message.GetType());
-            serializer.Serialize(writer, message);
-        }
 
         private static object GetObjectFromNode(XmlNode element, IEnumerable<Type> messageTypes)
         {
@@ -119,7 +105,7 @@
             return types;
         }
 
-        private static readonly ILog logger = LogManager.GetLogger(typeof(SystemXmlMessageSerializer));
-        private static readonly ConcurrentDictionary<string,Type> typesCache = new ConcurrentDictionary<string, Type>();
+         static readonly ILog logger = LogManager.GetLogger(typeof(SystemXmlMessageSerializer));
+        static readonly ConcurrentDictionary<string,Type> typesCache = new ConcurrentDictionary<string, Type>();
     }
 }
