@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>NServiceBus.Serializers.SystemXml</id>
-    <version>0.0.0</version>
+    <version>1.0.0</version>
     <authors>Fawad Halim</authors>
     <owners>Fawad Halim</owners>
     <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0.html</licenseUrl>
@@ -13,11 +13,10 @@
     <copyright>Copyright 2014 Fawad Halim</copyright>
     <tags>NServiceBus XML Interoperability</tags>
     <dependencies>
-      <dependency id="NServiceBus" version="[4.1.0.0, 5.0.0.0)" />
-      <dependency id="NServiceBus.Interfaces" version="[4.1.0.0, 5.0.0.0)" />
+      <dependency id="NServiceBus" version="[6.0.0-rc0003, 7.0.0.0)" />
     </dependencies>
   </metadata>
   <files>
-    <file src="..\..\src\NServiceBus.Serializers.SystemXml\bin\Debug\NServiceBus.Serializers.SystemXml.???" target="lib\net45" />
+    <file src="..\..\src\NServiceBus.Serializers.SystemXml\bin\Debug\NServiceBus.Serializers.SystemXml.???" target="lib\net46" />
   </files>
 </package>
