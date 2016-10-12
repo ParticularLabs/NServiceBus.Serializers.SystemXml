@@ -13,10 +13,10 @@
     <copyright>Copyright 2014 Fawad Halim</copyright>
     <tags>NServiceBus XML Interoperability</tags>
     <dependencies>
-      <dependency id="NServiceBus" version="[6.0.0-rc0003, 7.0.0.0)" />
+      <dependency id="NServiceBus" version="[6.0.0, 7.0.0)" />
     </dependencies>
   </metadata>
   <files>
-    <file src="..\..\src\NServiceBus.Serializers.SystemXml\bin\Debug\NServiceBus.Serializers.SystemXml.???" target="lib\net46" />
+    <file src="..\..\src\NServiceBus.Serializers.SystemXml\bin\Debug\NServiceBus.Serializers.SystemXml.???" target="lib" />
   </files>
 </package>
